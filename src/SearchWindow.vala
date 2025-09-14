@@ -1,24 +1,31 @@
 public class Detective.SearchWindow : Gtk.ApplicationWindow {
     public Engine engine { get; construct; }
 
+    private static Gtk.CssProvider style_provider; 
+
     //Used in signal handlers so make them fields to avoid memory leaks
     private Gtk.SearchEntry entry;
     private Gtk.SingleSelection selection_model;
     private Gtk.ListView list_view;
     private Gtk.ScrolledWindow scrolled_window;
-    private Gtk.Stack stack;
+    private Gtk.Box content;
 
     public SearchWindow (Application app, Engine engine) {
         Object (application: app, engine: engine);
     }
 
     construct {
+        style_provider = new Gtk.CssProvider ();
+        style_provider.load_from_resource ("/io/github/leolost2605/Application.css");
+        Gtk.StyleContext.add_provider_for_display (Gdk.Display.get_default (), style_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
+
         entry = new Gtk.SearchEntry () {
             margin_top = 6,
             margin_bottom = 6,
             margin_start = 6,
             margin_end = 6,
-            search_delay = 100
+            search_delay = 100,
+            placeholder_text = "Search for something…"
         };
 
         selection_model = new Gtk.SingleSelection (engine.matches) {
@@ -64,23 +71,19 @@ public class Detective.SearchWindow : Gtk.ApplicationWindow {
         };
 
         scrolled_window = new Gtk.ScrolledWindow () {
-            child = view_port
+            child = view_port,
+            propagate_natural_height = true,
+            max_content_height = 512,
+            visible = false,
         };
 
-        var placeholder = new Granite.Placeholder (_("Start typing to search")) {
-            icon = new ThemedIcon ("system-search")
-        };
-
-        stack = new Gtk.Stack ();
-        stack.add_named (placeholder, "placeholder");
-        stack.add_named (scrolled_window, "list");
-
-        var content = new Gtk.Box (VERTICAL, 6);
+        content = new Gtk.Box (VERTICAL, 6);
         content.append (entry);
-        content.append (stack);
+        content.append (scrolled_window);
 
-        resizable = false;
         child = content;
+        resizable = false;
+        vexpand = true;
         titlebar = new Gtk.Grid () { visible = false };
 
         entry.search_changed.connect (() => {
@@ -138,9 +141,9 @@ public class Detective.SearchWindow : Gtk.ApplicationWindow {
         selection_model.selected = 0;
 
         if (selection_model.n_items > 0) {
-            stack.visible_child_name = "list";
+            scrolled_window.set_visible (true);
         } else {
-            stack.visible_child_name = "placeholder";
+            scrolled_window.set_visible (false);
         }
 
         return Source.REMOVE;

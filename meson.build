@@ -1,6 +1,7 @@
 # project name and programming language
 project('io.github.leolost2605.detective', 'vala', 'c')
 
+gnome = import('gnome')
 pkgconfig = import('pkgconfig')
 i18n = import('i18n')
 
@@ -10,6 +11,11 @@ add_global_arguments('-DGETTEXT_PACKAGE="@0@"'.format (meson.project_name()), la
 subdir('lib')
 subdir('plugins')
 
+gresource_detective = gnome.compile_resources(
+    'gresource_detective',
+    join_paths('data', meson.project_name() + '.gresource.xml'),
+    source_dir: 'data'
+)
 # Create a new executable, list the files we want to compile, list the dependencies we need, and install
 executable(
     meson.project_name(),
